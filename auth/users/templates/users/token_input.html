@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Input</title>
+</head>
+<body>
+    <script>
+        async function submitToken() {
+            var userToken = prompt("Введите ваш токен:");
+
+            if (userToken) {
+                document.cookie = `inputToken=${userToken}; path=/`;
+
+                try {
+                    const response = await fetch('/protected_resource/', {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        mode: 'cors',
+                        cache: 'no-cache'
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/protected_resource/';
+                    } else {
+                        console.error(`Ошибка: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                }
+            } else {
+                console.error('Токен не введен');
+            }
+        }
+
+        submitToken();
+    </script>
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Input</title>
+</head>
+<body>
+    <script>
+        async function submitToken() {
+            var userToken = prompt("Введите ваш токен:");
+
+            if (userToken) {
+                try {
+                    const headers = new Headers();
+                    headers.append('Authorization', 'Bearer ' + userToken);
+                    headers.append('Content-Type', 'application/json');
+                    headers.append('Accept', 'application/json');
+                    headers.append('X-Requested-With', 'XMLHttpRequest');
+
+                    const response = await fetch('/protected_resource/', {
+                        method: 'GET',
+                        headers: headers,
+                        credentials: 'same-origin',
+                        mode: 'cors',
+                        cache: 'no-cache'
+                    });
+
+                    if (response.ok) {
+                        // Переход на страницу с приветствием
+                        window.location.href = '/protected_resource/';
+                    } else {
+                        console.error(`Ошибка: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                }
+            } else {
+                console.error('Токен не введен');
+            }
+        }
+
+        // Вызываем функцию при загрузке страницы
+        submitToken();
+    </script>
+</body>
+</html> -->
+
+

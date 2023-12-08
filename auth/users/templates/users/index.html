@@ -3,6 +3,7 @@
 
 {% block nav %}
     <nav style="text-align: center;">
+        <a class="nav-button" href="{% url 'token_input' %}">Защищенный ресурс</a>
         <a class="nav-button" href="{% url 'login' %}">Войти</a>
         <a class="nav-button" href="{% url 'logout' %}">Выйти</a>
     </nav>

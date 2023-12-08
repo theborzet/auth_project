@@ -1,25 +1,26 @@
 import jwt
 import datetime
-import requests
 
-from django.http import JsonResponse
+
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate, login
 from django.views.generic.base import TemplateView
 from django.contrib.auth.views import LogoutView, LoginView
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.shortcuts import render
+
+
+
 
 
 from common.views import TitleMixin
 from users.forms import UserLoginForm
 
-
 class IndexView(TitleMixin, TemplateView):
     title = 'Store'
     template_name = 'users/index.html'
-
 
 class UserLoginView(TitleMixin, LoginView):
     title = 'Store - Авторизация'
@@ -27,26 +28,13 @@ class UserLoginView(TitleMixin, LoginView):
     form_class = UserLoginForm
     success_url = reverse_lazy('index')
 
-    def make_protected_resource_request(self, token):
-        url = "http://127.0.0.1:8000/protected_resource/"
-        headers = {"Authorization": f"Bearer {token}"}  
-
-        response = requests.get(url, headers=headers)  
-
-        if response.status_code == 200:
-            print(response.json())
-        else:
-            print(f"Error: {response.status_code}")
-        return response
-
     def generate_token(self, user):
         payload = {
             'id': user.id,
             'username': user.username,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.JWT_EXP_DELTA_SECONDS)
         }
-        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        self.make_protected_resource_request(token=token)
+        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)    
         return token
     
     def form_invalid(self, form):
@@ -61,31 +49,51 @@ class UserLoginView(TitleMixin, LoginView):
         if user:
             login(self.request, user)
             token = self.generate_token(user)
-            return JsonResponse({'Your token' : token})
+            
+            response = HttpResponse(f'Your token: {token}')
+            response.set_cookie('token', token, expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.JWT_EXP_DELTA_SECONDS), httponly=True)
+
+            return response
         else:
             return self.form_invalid(form=form)
-        
+
 
 class UserLogoutView(TitleMixin, LogoutView):
     title = 'Store - Выход'
     success_url = reverse_lazy('index')
 
-@csrf_exempt  # В данном примере для упрощения отключена CSRF-защита
+    
+
+
+
 def protected_resource(request):
-    token = request.headers.get('Authorization')
+    authorization_header = request.COOKIES.get('inputToken')
+    user_token = request.COOKIES.get('token')
 
-    if not token:
-        return JsonResponse({'error': 'No token provided'}, status=401)
+    if not authorization_header:
+        return render(request, 'users/protected_resource.html', {'message': 'No token provided'})
 
+    # Парсим токен из заголовка (пример: "Bearer <токен>")
+    # client_token = authorization_header.split()
+
+    # if len(client_token) != 2 or client_token[0].lower() != 'bearer':
+    #     return render(request, 'users/protected_resource.html', {'message': 'Invalid Authorization header'})
+
+    # client_token = client_token[1]
+    
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        auth_payload = jwt.decode(authorization_header, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        user_payload = jwt.decode(user_token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        if user_payload == auth_payload:
+            username = user_payload.get('username')
+            return render(request, 'users/protected_resource.html', {'username': username})
+        return render(request, 'users/protected_resource.html', {'message': 'Invalid token'})
     except jwt.ExpiredSignatureError:
-        return JsonResponse({'error': 'Token has expired'}, status=401)
+        return render(request, 'users/protected_resource.html', {'message': 'Token has expired'})
     except jwt.InvalidTokenError:
-        return JsonResponse({'error': 'Invalid token'}, status=401)
+            return render(request, 'users/protected_resource.html', {'message': 'Invalid token'})
 
-    user_id = payload.get('id')
-    username = payload.get('username')
 
-    return JsonResponse({'message': f'Hello, {username}! This is a protected resource.'})
+def token_input(request):
+    return render(request, 'users/token_input.html')
 

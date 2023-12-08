@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'corsheaders',
+
     'users',
 ]
 
@@ -50,7 +52,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'users.middleware.TokenMiddleware',
+    # 'corsheaders.middleware.CorsMiddleware',
+
+    # 'users.middleware.TokenMiddleware',
 ]
 
 ROOT_URLCONF = 'auth.urls'
@@ -137,5 +141,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 JWT_SECRET_KEY = 'c9fac06c9ed70ec20402914445d3b6cc834e7922db5035b6097a5475d7c2f08c'  
 JWT_ALGORITHM = 'HS256'
-JWT_EXP_DELTA_SECONDS = 120  
+JWT_EXP_DELTA_SECONDS = 120
 
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',  
+    'content-type',
+]

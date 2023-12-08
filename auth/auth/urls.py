@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path
 
 
-from users.views import IndexView, UserLoginView, UserLogoutView, protected_resource
+from users.views import IndexView, UserLoginView, UserLogoutView, protected_resource, token_input
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,4 +26,5 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
     path('protected_resource/', protected_resource, name='protected_resource'),
+    path('token_input/', token_input, name='token_input'),
 ]
